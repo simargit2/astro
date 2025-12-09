@@ -1,0 +1,108 @@
+---
+import { fetchNews } from "../services/fetchnews";
+
+const {
+  limit = 5,
+  layout = "col",
+  sector = "All",
+} = Astro.props;
+
+const today = new Date().toISOString().split("T")[0];
+
+const newsData = await fetchNews({
+  date: "2025-12-04",
+  page: 1,
+  limit,
+  sector,
+});
+
+const createSlug = (text) =>
+  text
+    ? text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "")
+        .replace(/\-\-+/g, "-")
+    : "article";
+
+// WORD-TRUNCATE FOR COL VIEW (max 5 words)
+const truncateWords = (text, count = 5) => {
+  if (!text) return "";
+  const words = text.trim().split(/\s+/);
+  if (words.length <= count) return text;
+  return words.slice(0, count).join(" ") + "…";
+};
+---
+
+<!-- OUTER WRAPPER -->
+<div class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl p-4 mt-2">
+
+  <!-- LIST MODE (col) -->
+  {layout === "col" && (
+    <div class="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent pr-1">
+      {newsData?.data?.map((article) => {
+        const category = createSlug(article.suggestedSector || "general");
+        const slug = createSlug(article.translations?.[0]?.headline || "untitled");
+        const id = article._id;
+        const img = article.imageUrl || "/placeholder.png";
+        const title = article.translations?.[0]?.headline || "Untitled";
+
+        return (
+          <a
+            href={`/news/english/${category}/${slug}/${id}`}
+            class="group bg-black/40 hover:bg-neutral-800 border border-neutral-800/50 transition rounded-lg px-3 py-2 flex flex-row items-center gap-3"
+          >
+            <!-- IMAGE LEFT -->
+            <div class="min-w-[56px] h-[56px] rounded-md overflow-hidden">
+              <img src={img} alt={title} class="object-cover w-full h-full" loading="lazy" />
+            </div>
+
+            <!-- TEXT RIGHT -->
+            <div class="flex flex-col flex-1 min-w-0">
+              <!-- 5 WORD TRUNCATE -->
+              <p class="text-slate-200 text-sm font-medium">
+                {truncateWords(title, 5)}
+              </p>
+
+              <p class="text-gray-500 text-xs">{article.suggestedSector}</p>
+            </div>
+
+            <div class="text-neutral-500 text-lg shrink-0">›</div>
+          </a>
+        );
+      })}
+    </div>
+  )}
+
+  <!-- CARD GRID MODE (row) -->
+  {layout === "row" && (
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {newsData?.data?.map((article) => {
+        const category = createSlug(article.suggestedSector || "general");
+        const slug = createSlug(article.translations?.[0]?.headline || "untitled");
+        const id = article._id;
+        const img = article.imageUrl || "/placeholder.png";
+        const title = article.translations?.[0]?.headline || "Untitled";
+
+        return (
+          <a
+            href={`/news/english/${category}/${slug}/${id}`}
+            class="group bg-black/40 hover:bg-neutral-800 border border-neutral-800/50 transition rounded-lg p-3 flex flex-col"
+          >
+            <!-- IMAGE TOP -->
+            <div class="w-full h-32 lg:h-40 rounded-md overflow-hidden mb-2">
+              <img src={img} alt={title} class="object-cover w-full h-full" loading="lazy" />
+            </div>
+
+            <!-- TEXT BELOW (line clamp) -->
+            <p class="text-slate-200 text-sm font-semibold line-clamp-2">{title}</p>
+            <p class="text-gray-500 text-xs mt-1">{article.suggestedSector}</p>
+          </a>
+        );
+      })}
+    </div>
+  )}
+
+</div>

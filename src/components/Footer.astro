@@ -1,0 +1,86 @@
+---
+/* No JS required */
+---
+
+<style>
+  /* Prevent hiding content */
+  body {
+    padding-bottom: 75px;
+  }
+
+  @media (max-width: 767px) {
+    body {
+      padding-bottom: 90px;
+    }
+  }
+</style>
+
+<!-- MID-SLIM FOOTER BANNER -->
+<div 
+  class="
+    fixed bottom-0 left-0 w-full z-[9999]
+    bg-gradient-to-r from-[#c544c9] to-[#8b5cf6]
+    px-3 py-2 border-t border-[#0f3460]
+    shadow-[0_-2px_20px_rgba(0,0,0,0.35)]
+    flex items-center justify-center
+  "
+>
+  <div class="w-full max-w-[1200px] flex flex-col md:flex-row items-center justify-between gap-2">
+
+    <!-- TEXT -->
+    <div class="text-white text-sm md:text-base font-semibold text-center md:text-left leading-tight">
+      GET INSTANT STOCK ALERTS ON WHATSAPP FOR YOUR PORTFOLIO STOCKS
+    </div>
+
+    <!-- DESKTOP -->
+    <div class="hidden md:flex items-center justify-end gap-3">
+
+      <a href="https://whalesbook.com/login">
+        <button 
+          class="
+            flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-md
+            border border-white/50 cursor-pointer text-sm
+          "
+        >
+          <img src="/logo.png" class="h-5 w-5 object-contain" alt="logo" />
+          <span class="font-semibold text-sm">Download</span>
+        </button>
+      </a>
+
+      <a href="https://apps.apple.com/us/app/whalesbook/id6502243553" target="_blank">
+        <img src="/appstore.webp" alt="apple" class="h-8 object-contain" />
+      </a>
+
+      <a href="https://play.google.com/store/apps/details?id=com.whalesnetwork.whalesbook&hl=en_IN" target="_blank">
+        <img src="/googleplay.webp" alt="google" class="h-10 object-contain" />
+      </a>
+
+    </div>
+
+    <!-- MOBILE -->
+    <div class="flex md:hidden items-center justify-center gap-3">
+
+      <a href="https://whalesbook.com/app">
+        <button 
+          class="
+            flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-md
+            border border-white/50 cursor-pointer text-xs
+          "
+        >
+          <img src="/logo.png" class="h-5 w-5 object-contain" alt="logo" />
+          <span class="font-semibold text-[11px]">Download</span>
+        </button>
+      </a>
+
+      <a href="https://whalesbook.com/app">
+        <img src="/appstore.webp" class="h-7 object-contain" alt="apple" />
+      </a>
+
+      <a href="https://whalesbook.com/app">
+        <img src="/googleplay.webp" class="h-9 object-contain" alt="google" />
+      </a>
+
+    </div>
+
+  </div>
+</div>
