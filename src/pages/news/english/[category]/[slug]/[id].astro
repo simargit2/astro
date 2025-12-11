@@ -11,9 +11,7 @@ import Navbar from "../../../../../components/Navbar.astro";
 
 const { id } = Astro.params;
 
-// CRITICAL: Aggressive Caching
-// s-maxage=3600 (Cache on CDN for 1 hour)
-// stale-while-revalidate=600 (Serve old content while fetching new, for speed)
+// 1. CACHING HEADERS (Keep this! It makes the server response instant after the first hit)
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=3600, stale-while-revalidate=600');
 Astro.response.headers.set('Vary', 'Accept-Encoding');
 
@@ -35,7 +33,6 @@ const formatDate = (isoString) => {
   });
 };
 
-// FIXED: Contrast ratios in content parser
 const parseContent = (text) => {
   if (!text) return "";
   return text
@@ -44,8 +41,7 @@ const parseContent = (text) => {
     .replace(/>/g, "&gt;")
     .replace(/^### (.*$)/gim, '<h3 class="text-lg md:text-xl font-bold text-white mt-8 mb-3">$1</h3>')
     .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-indigo-200">$1</strong>')
-    // Fix: Flex div instead of li, lighter text color
-    .replace(/^\* (.*$)/gim, '<div class="flex gap-3 ml-1 mb-2"><span class="text-indigo-500 font-bold text-lg leading-none">•</span><span class="text-slate-300">$1</span></div>')
+    .replace(/^\* (.*$)/gim, '<div class="flex gap-3 ml-1 mb-2"><span class="text-indigo-500 font-bold text-lg leading-none" aria-hidden="true">•</span><span class="text-slate-300">$1</span></div>')
     .split("\n\n")
     .map((p) => {
       if (p.trim().match(/^<(h3|div)/)) return p;
@@ -68,9 +64,10 @@ const contentHtml = parseContent(detailedCoverage);
     <meta property="og:description" content={shortDescription} />
     {imageUrl && <meta property="og:image" content={imageUrl} />}
     
-    <!-- Inline Critical CSS -->
     <style>
-      :root{color-scheme:dark}body{background-color:#000;color:#e2e8f0}.hero-title{line-height:1.2;letter-spacing:-0.01em}
+      :root{color-scheme:dark}
+      body{background-color:#000;color:#e2e8f0}
+      .hero-title{line-height:1.2;letter-spacing:-0.01em}
       .reserve-img{width:100%;height:auto;aspect-ratio:16/9;background:#111;object-fit:cover;display:block}
     </style>
   </head>
@@ -84,15 +81,15 @@ const contentHtml = parseContent(detailedCoverage);
         <!-- MAIN COLUMN -->
         <article class="w-full md:w-[70%] lg:w-[75%] min-w-0">
           
-          <!-- H1 is LCP - Render Text First -->
+          <!-- 1. LCP ELEMENT: H1 TEXT (Loads Instantly) -->
           <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 hero-title">
             {headline}
           </h1>
 
-          <!-- Meta Row -->
+          <!-- Meta Row (Fixed Contrast: text-slate-400) -->
           <div class="flex flex-wrap items-center text-xs font-bold tracking-wider text-slate-400 mb-6 uppercase">
             <span class="text-indigo-400">{newsType}</span>
-            <span class="mx-2 text-slate-700">|</span>
+            <span class="mx-2 text-slate-600">|</span>
             <span>{formatDate(dateStr)}</span>
           </div>
 
@@ -107,31 +104,34 @@ const contentHtml = parseContent(detailedCoverage);
              </div>
           </div>
 
-          <!-- Summary Box -->
+          <!-- Overview Box -->
           <div class="bg-neutral-900/40 border border-neutral-800 rounded-lg p-5 mb-8">
              <h2 class="text-yellow-400 font-bold text-sm mb-2 uppercase tracking-wide">Overview</h2>
              <p class="text-slate-300 text-sm md:text-base leading-relaxed">{shortDescription}</p>
           </div>
 
-          <!-- Image (Mobile) - Lazy Loaded -->
-          <div class="md:hidden mb-6">
+          <!-- 2. MOBILE STRATEGY: BANNER FIRST -->
+          <!-- We place the banner BEFORE the image on mobile. This pushes the heavy image down. -->
+          <div class="md:hidden mb-8">
+            <AppBanner />
+          </div>
+
+          <!-- 3. MOBILE IMAGE: PUSHED DOWN -->
+          <!-- It is now below the fold. It is no longer the LCP element. -->
+          <div class="md:hidden mb-8">
             <img 
               src={imageUrl || "/placeholder.jpg"} 
               alt={headline} 
               width="800" 
               height="450" 
-              class="reserve-img rounded-lg"
+              class="reserve-img rounded-lg border border-neutral-800"
               loading="lazy" 
-              decoding="async" 
+              decoding="async"
+              fetchpriority="low"
             />
           </div>
 
-          <!-- App Banner (Mobile) -->
-          <div class="md:hidden mb-8">
-            <AppBanner />
-          </div>
-
-          <!-- Image (Desktop) - High Priority -->
+          <!-- DESKTOP IMAGE (Hidden on Mobile) -->
           <div class="hidden md:block mb-8">
              <img 
               src={imageUrl || "/placeholder.jpg"} 
@@ -141,7 +141,6 @@ const contentHtml = parseContent(detailedCoverage);
               class="reserve-img rounded-xl border border-neutral-800"
               loading="eager" 
               decoding="async" 
-              fetchpriority="high"
             />
           </div>
 
@@ -180,10 +179,10 @@ const contentHtml = parseContent(detailedCoverage);
       <Footer/>
     </main>
 
-    <!-- Audio Script -->
+    <!-- Simple Audio Script if needed -->
     <script type="module">
       window.addEventListener('load', () => {
-         // Initialize audio logic here if needed
+         // Logic for audio player if you add it back
       });
     </script>
   </body>
