@@ -66,7 +66,7 @@ const truncateWords = (text, count = 5) => {
                 {truncateWords(title, 5)}
               </p>
 
-              <p class="text-gray-500 text-xs">{article.suggestedSector}</p>
+              <p class="white text-xs">{article.suggestedSector}</p>
             </div>
 
             <div class="text-neutral-500 text-lg shrink-0">›</div>
@@ -98,7 +98,7 @@ const truncateWords = (text, count = 5) => {
 
             <!-- TEXT BELOW (line clamp) -->
             <p class="text-slate-200 text-sm font-semibold line-clamp-2">{title}</p>
-            <p class="text-gray-500 text-xs mt-1">{article.suggestedSector}</p>
+            <p class="white text-xs mt-1">{article.suggestedSector}</p>
           </a>
         );
       })}
