@@ -1,86 +1,34 @@
----
-/* No JS required */
----
-
 <style>
-  /* Prevent hiding content */
-  body {
-    padding-bottom: 75px;
-  }
-
-  @media (max-width: 767px) {
-    body {
-      padding-bottom: 90px;
-    }
-  }
+  body { padding-bottom: 75px; }
+  @media (max-width: 767px) { body { padding-bottom: 90px; } }
 </style>
 
-<!-- MID-SLIM FOOTER BANNER -->
-<div 
-  class="
-    fixed bottom-0 left-0 w-full z-[9999]
-    bg-gradient-to-r from-[#c544c9] to-[#8b5cf6]
-    px-3 py-2 border-t border-[#0f3460]
-    shadow-[0_-2px_20px_rgba(0,0,0,0.35)]
-    flex items-center justify-center
-  "
->
+<div class="fixed bottom-0 left-0 w-full z-50 bg-gradient-to-r from-[#c544c9] to-[#8b5cf6] px-3 py-2 border-t border-[#0f3460] shadow-2xl flex items-center justify-center">
   <div class="w-full max-w-[1200px] flex flex-col md:flex-row items-center justify-between gap-2">
 
-    <!-- TEXT -->
-    <div class="text-white text-sm md:text-base font-semibold text-center md:text-left leading-tight">
-      GET INSTANT STOCK ALERTS ON WHATSAPP FOR YOUR PORTFOLIO STOCKS
+    <!-- TEXT: Increased weight for contrast -->
+    <div class="text-white text-sm md:text-base font-bold text-center md:text-left leading-tight drop-shadow-md">
+      GET INSTANT STOCK ALERTS ON WHATSAPP
     </div>
 
-    <!-- DESKTOP -->
-    <div class="hidden md:flex items-center justify-end gap-3">
-
-      <a href="https://whalesbook.com/login">
-        <button 
-          class="
-            flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-md
-            border border-white/50 cursor-pointer text-sm
-          "
-        >
-          <img src="/logo.png" class="h-5 w-5 object-contain" alt="logo" />
-          <span class="font-semibold text-sm">Download</span>
+    <!-- BUTTONS -->
+    <div class="flex items-center justify-end gap-3">
+      <a href="https://whalesbook.com/login" aria-label="Download App">
+        <button class="flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-md border border-white/50 cursor-pointer">
+          <!-- Added explicit width/height -->
+          <img src="/logo.png" width="20" height="20" class="h-5 w-5 object-contain" alt="" aria-hidden="true" />
+          <span class="font-semibold text-xs md:text-sm">Download</span>
         </button>
       </a>
 
-      <a href="https://apps.apple.com/us/app/whalesbook/id6502243553" target="_blank">
-        <img src="/appstore.webp" alt="apple" class="h-8 object-contain" />
+      <!-- Added explicit width/height -->
+      <a href="https://apps.apple.com/us/app/whalesbook/id6502243553" target="_blank" aria-label="Download on App Store">
+        <img src="/appstore.webp" width="98" height="32" class="h-8 w-auto object-contain" alt="App Store" />
       </a>
 
-      <a href="https://play.google.com/store/apps/details?id=com.whalesnetwork.whalesbook&hl=en_IN" target="_blank">
-        <img src="/googleplay.webp" alt="google" class="h-10 object-contain" />
+      <a href="https://play.google.com/store/apps/details?id=com.whalesnetwork.whalesbook&hl=en_IN" target="_blank" aria-label="Get it on Google Play">
+        <img src="/googleplay.webp" width="109" height="32" class="h-8 w-auto object-contain" alt="Google Play" />
       </a>
-
     </div>
-
-    <!-- MOBILE -->
-    <div class="flex md:hidden items-center justify-center gap-3">
-
-      <a href="https://whalesbook.com/app">
-        <button 
-          class="
-            flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-md
-            border border-white/50 cursor-pointer text-xs
-          "
-        >
-          <img src="/logo.png" class="h-5 w-5 object-contain" alt="logo" />
-          <span class="font-semibold text-[11px]">Download</span>
-        </button>
-      </a>
-
-      <a href="https://whalesbook.com/app">
-        <img src="/appstore.webp" class="h-7 object-contain" alt="apple" />
-      </a>
-
-      <a href="https://whalesbook.com/app">
-        <img src="/googleplay.webp" class="h-9 object-contain" alt="google" />
-      </a>
-
-    </div>
-
   </div>
 </div>

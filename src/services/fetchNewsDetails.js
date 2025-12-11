@@ -1,6 +1,5 @@
 export const fetchNewsDetails = async (id) => {
   try {
-    const baseUrl = process.env.API_BASE_URL; // server env
     const url = `https://app1.whalesbook1.shop/published-news-collection/getFreeNewsById`;
 
     const response = await fetch(url, {
