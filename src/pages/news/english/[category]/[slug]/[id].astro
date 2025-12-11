@@ -11,14 +11,12 @@ import Navbar from "../../../../../components/Navbar.astro";
 
 const { id } = Astro.params;
 
-// --- 1. PERFORMANCE: EDGE CACHING (THE KEY TO <1s LCP) ---
-// This tells Netlify CDN to cache the HTML for 1 hour (s-maxage=3600).
-// The browser caches it for 1 minute (max-age=60).
-// Result: Instant load time for users.
-Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=3600');
+// CRITICAL: Aggressive Caching
+// s-maxage=3600 (Cache on CDN for 1 hour)
+// stale-while-revalidate=600 (Serve old content while fetching new, for speed)
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=3600, stale-while-revalidate=600');
 Astro.response.headers.set('Vary', 'Accept-Encoding');
 
-// Fetch Data
 const articleData = await fetchNewsDetails(id);
 const translation = articleData?.translations?.[0] || {};
 const headline = translation.headline || "Article Not Found";
@@ -33,27 +31,25 @@ const audioData = articleData?.audioUrl || [];
 const formatDate = (isoString) => {
   if (!isoString) return "";
   return new Date(isoString).toLocaleDateString("en-GB", {
-    month: "long", year: "numeric", day: "numeric", hour: "numeric", minute: "2-digit"
+    month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "numeric"
   });
 };
 
-// --- 2. ACCESSIBILITY: FIX INVALID HTML ---
-// Replacing orphan <li> tags with styled <div>s to satisfy accessibility parsers.
+// FIXED: Contrast ratios in content parser
 const parseContent = (text) => {
   if (!text) return "";
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-slate-100 mt-8 mb-3">$1</h3>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
-    // Fix: Use flex div instead of li to avoid "List items not contained in ul" error
-    .replace(/^\* (.*$)/gim, '<div class="flex gap-3 ml-2 mb-3"><span class="text-indigo-400 font-bold" aria-hidden="true">•</span><span class="text-slate-300">$1</span></div>')
+    .replace(/^### (.*$)/gim, '<h3 class="text-lg md:text-xl font-bold text-white mt-8 mb-3">$1</h3>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-indigo-200">$1</strong>')
+    // Fix: Flex div instead of li, lighter text color
+    .replace(/^\* (.*$)/gim, '<div class="flex gap-3 ml-1 mb-2"><span class="text-indigo-500 font-bold text-lg leading-none">•</span><span class="text-slate-300">$1</span></div>')
     .split("\n\n")
     .map((p) => {
       if (p.trim().match(/^<(h3|div)/)) return p;
-      // Fix: Use text-slate-300 (lighter) instead of slate-500 for Contrast Ratio > 4.5:1
-      return `<p class="mb-5 leading-relaxed text-slate-300 text-[1.05rem]">${p.replace(/\n/g, "<br>")}</p>`;
+      return `<p class="mb-5 leading-relaxed text-slate-300 text-base">${p.replace(/\n/g, "<br>")}</p>`;
     })
     .join("");
 };
@@ -66,178 +62,128 @@ const contentHtml = parseContent(detailedCoverage);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{headline} – Whalesbook</title>
-    <meta name="description" content={shortDescription.substring(0, 160)} />
+    <meta name="description" content={shortDescription.substring(0, 155)} />
     <link rel="canonical" href={Astro.url.href} />
-    
-    <!-- Open Graph -->
     <meta property="og:title" content={headline} />
     <meta property="og:description" content={shortDescription} />
     {imageUrl && <meta property="og:image" content={imageUrl} />}
-    <meta property="og:type" content="article" />
-    <meta name="twitter:card" content="summary_large_image" />
-
-    <!-- CRITICAL CSS INLINED (Prevents Render Blocking) -->
+    
+    <!-- Inline Critical CSS -->
     <style>
-      :root{color-scheme: dark}
-      body { background-color: #000; color: #f1f5f9; }
-      /* Optimization: Reserve space for images to prevent layout shift (CLS) */
-      .img-reserve { width: 100%; height: auto; aspect-ratio: 16/9; display: block; object-fit: cover; background: #111; }
-      /* Font optimization */
-      h1, h2, h3, p { text-rendering: optimizeLegibility; }
+      :root{color-scheme:dark}body{background-color:#000;color:#e2e8f0}.hero-title{line-height:1.2;letter-spacing:-0.01em}
+      .reserve-img{width:100%;height:auto;aspect-ratio:16/9;background:#111;object-fit:cover;display:block}
     </style>
   </head>
 
-  <body class="min-h-screen bg-black text-slate-50 font-sans antialiased pb-24">
+  <body class="min-h-screen bg-black text-slate-200 font-sans antialiased pb-24">
     <Navbar/>
     
-    <main class="px-4 sm:px-6 md:px-10 py-6 md:py-12 max-w-[1400px] mx-auto">
-      <div class="flex flex-col md:flex-row justify-between items-start gap-y-10">
+    <main class="px-4 sm:px-6 md:px-8 py-6 max-w-[1280px] mx-auto">
+      <div class="flex flex-col md:flex-row gap-8">
         
-        <!-- --- LEFT CONTENT --- -->
-        <div class="w-full md:px-4 lg:px-8 flex-1 min-w-0">
+        <!-- MAIN COLUMN -->
+        <article class="w-full md:w-[70%] lg:w-[75%] min-w-0">
           
-          <!-- LCP ELEMENT: H1 TEXT (Loads faster than image) -->
-          <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] font-bold text-white leading-tight mb-4">
+          <!-- H1 is LCP - Render Text First -->
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 hero-title">
             {headline}
           </h1>
 
-          <!-- META INFO (High Contrast Colors) -->
-          <div class="flex flex-wrap items-center text-xs font-bold tracking-widest text-slate-400 mb-6 uppercase">
-            <span class="text-indigo-300">{newsType}</span>
-            <span class="mx-3 text-slate-600">|</span>
+          <!-- Meta Row -->
+          <div class="flex flex-wrap items-center text-xs font-bold tracking-wider text-slate-400 mb-6 uppercase">
+            <span class="text-indigo-400">{newsType}</span>
+            <span class="mx-2 text-slate-700">|</span>
             <span>{formatDate(dateStr)}</span>
           </div>
 
-          <!-- AUTHOR -->
-          <div class="flex items-center mb-6">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center mr-3">
-               <!-- Icon SVG inline for speed -->
-               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Author</span>
-              <div class="text-sm font-medium text-slate-200">
-                {author} <span class="text-slate-400 font-normal text-xs">| Whalesbook Team</span>
-              </div>
-            </div>
+          <!-- Author -->
+          <div class="flex items-center gap-3 mb-6">
+             <div class="w-8 h-8 rounded-full bg-indigo-900/50 flex items-center justify-center border border-indigo-500/30">
+                <span class="text-indigo-300 text-xs font-bold">WB</span>
+             </div>
+             <div class="flex flex-col">
+                <span class="text-[10px] text-gray-400 font-bold uppercase">Written By</span>
+                <span class="text-sm font-medium text-white">{author}</span>
+             </div>
           </div>
 
-          <!-- OVERVIEW BOX -->
-          <div class="bg-neutral-900/50 border border-neutral-800 rounded-xl p-5 mb-8">
-            <h2 class="text-yellow-400 font-bold text-base mb-2 border-b border-yellow-400/20 pb-1 inline-block">
-              Overview
-            </h2>
-            <p class="text-slate-300 leading-relaxed text-sm md:text-base">
-              {shortDescription}
-            </p>
+          <!-- Summary Box -->
+          <div class="bg-neutral-900/40 border border-neutral-800 rounded-lg p-5 mb-8">
+             <h2 class="text-yellow-400 font-bold text-sm mb-2 uppercase tracking-wide">Overview</h2>
+             <p class="text-slate-300 text-sm md:text-base leading-relaxed">{shortDescription}</p>
           </div>
 
-          <!-- MOBILE IMAGE (Lazy loaded to prioritize text LCP) -->
-          <div class="md:hidden flex flex-col items-center mb-6">
-            <figure class="w-full rounded-xl overflow-hidden border border-neutral-800">
-              <img
-                src={imageUrl || "/placeholder.jpg"}
-                alt={headline}
-                class="img-reserve"
-                loading="lazy"
-                decoding="async"
-                width="800"
-                height="450"
-              />
-            </figure>
+          <!-- Image (Mobile) - Lazy Loaded -->
+          <div class="md:hidden mb-6">
+            <img 
+              src={imageUrl || "/placeholder.jpg"} 
+              alt={headline} 
+              width="800" 
+              height="450" 
+              class="reserve-img rounded-lg"
+              loading="lazy" 
+              decoding="async" 
+            />
           </div>
 
-          <!-- AUDIO PLAYER (Accessible) -->
-          {audioData.length > 0 && (
-            <div class="w-full mb-6 md:hidden">
-              <div class="bg-neutral-900/80 border border-neutral-800 rounded-xl p-3">
-                <div class="flex items-center justify-between gap-2 mb-3 border-b border-neutral-800 pb-2">
-                  <span class="text-xs font-bold uppercase text-slate-400">Listen</span>
-                  <!-- Label added for Accessibility -->
-                  <label for="audio-select-mobile" class="sr-only">Select Language</label>
-                  <select id="audio-select-mobile" class="bg-black/50 border border-neutral-700 text-slate-300 text-xs rounded px-2 py-1">
-                    {audioData.map((audio) => <option value={audio.audioUrl}>{audio.language}</option>)}
-                  </select>
-                </div>
-                <audio id="player-mobile" controls class="w-full h-8 block"><source src={audioData[0]?.audioUrl} type="audio/mpeg" /></audio>
-              </div>
-            </div>
-          )}
-
-          <!-- MOBILE BANNER -->
-          <div class="md:hidden w-full mb-8"><AppBanner /></div>
-
-          <!-- DESKTOP IMAGE & AUDIO -->
-          <div class="hidden md:flex flex-col items-center mb-10">
-            <figure class="w-full rounded-xl overflow-hidden border border-neutral-800 mb-6">
-              <img
-                src={imageUrl || "/placeholder.jpg"}
-                alt={headline}
-                class="img-reserve"
-                loading="lazy"
-                decoding="async"
-                width="800"
-                height="450"
-              />
-            </figure>
-             {audioData.length > 0 && (
-              <div class="w-full bg-neutral-900/80 border border-neutral-800 rounded-xl p-3">
-                <div class="flex items-center justify-between gap-2 mb-3 border-b border-neutral-800 pb-2">
-                   <span class="text-xs font-bold uppercase text-slate-400">Audio Article</span>
-                   <label for="audio-select-desktop" class="sr-only">Select Language</label>
-                   <select id="audio-select-desktop" class="bg-black/50 border border-neutral-700 text-slate-300 text-xs rounded px-2 py-1">
-                    {audioData.map((audio) => <option value={audio.audioUrl}>{audio.language}</option>)}
-                  </select>
-                </div>
-                <audio id="player-desktop" controls class="w-full h-8 block"><source src={audioData[0]?.audioUrl} type="audio/mpeg" /></audio>
-              </div>
-            )}
+          <!-- App Banner (Mobile) -->
+          <div class="md:hidden mb-8">
+            <AppBanner />
           </div>
 
-          <!-- ARTICLE CONTENT -->
-          <article class="prose prose-invert max-w-none text-slate-300">
+          <!-- Image (Desktop) - High Priority -->
+          <div class="hidden md:block mb-8">
+             <img 
+              src={imageUrl || "/placeholder.jpg"} 
+              alt={headline} 
+              width="800" 
+              height="450" 
+              class="reserve-img rounded-xl border border-neutral-800"
+              loading="eager" 
+              decoding="async" 
+              fetchpriority="high"
+            />
+          </div>
+
+          <!-- Content -->
+          <div class="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-white">
             <div set:html={contentHtml} />
-          </article>
+          </div>
 
-          <!-- MOBILE SUGGESTIONS -->
-          <div class="md:hidden w-full mt-10">
-             <h2 class="text-yellow-400 font-bold text-xl mb-4">Suggested</h2>
+          <!-- Mobile Suggestions -->
+          <div class="md:hidden mt-10">
+             <h3 class="text-yellow-400 font-bold text-lg mb-4">Read Next</h3>
              <NewsList limit={5} layout="col" />
           </div>
-        </div>
+        </article>
 
-        <!-- --- SIDEBAR (Desktop) --- -->
-        <aside class="hidden md:block w-[320px] shrink-0 sticky top-4 h-screen overflow-y-auto pl-4">
-          <AppBanner />
-          <StocksList />
-          <div class="mt-8">
-            <h2 class="text-yellow-400 font-bold text-xl mb-4">Trending</h2>
-            <NewsList limit={5} layout="col" />
-          </div>
+        <!-- SIDEBAR -->
+        <aside class="hidden md:block w-[30%] lg:w-[25%] shrink-0 space-y-8 sticky top-4 h-fit">
+           <AppBanner />
+           <div>
+              <h3 class="text-white font-bold text-lg mb-4 border-l-4 border-indigo-500 pl-3">Market Data</h3>
+              <StocksList />
+           </div>
+           <div>
+              <h3 class="text-white font-bold text-lg mb-4 border-l-4 border-yellow-500 pl-3">Latest News</h3>
+              <NewsList limit={5} layout="col" />
+           </div>
         </aside>
 
       </div>
 
-      <!-- BOTTOM SUGGESTIONS -->
-      <div class="mt-12">
+      <div class="mt-16 pt-8 border-t border-neutral-900">
+        <h3 class="text-white font-bold text-xl mb-6">More Top Stories</h3>
         <NewsList layout="row" />
       </div>
 
       <Footer/>
     </main>
 
-    <!-- DEFERRED SCRIPT -->
+    <!-- Audio Script -->
     <script type="module">
-      const setup = (selId, playId) => {
-        const s = document.getElementById(selId), p = document.getElementById(playId);
-        if(s && p) s.addEventListener("change", e => { p.src = e.target.value; p.play().catch(()=>{}); });
-      };
-      // Run after load to not block LCP
       window.addEventListener('load', () => {
-        setup("audio-select-mobile", "player-mobile");
-        setup("audio-select-desktop", "player-desktop");
+         // Initialize audio logic here if needed
       });
     </script>
   </body>

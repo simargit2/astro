@@ -1,12 +1,49 @@
 ---
-import '../styles/global.css';
 ---
+<div class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl p-4 mt-6">
+  <div class="md:hidden">
+    <div class="flex flex-col gap-4">
+      <img 
+        src="/banner.webp" 
+        alt="Whalesbook Mobile App Banner" 
+        width="640" 
+        height="250"
+        class="w-full h-[250px] object-cover rounded-lg"
+      />
+      
+      <div class="flex items-center justify-center gap-4">
+        <a href="https://play.google.com/store/apps/details?id=com.whalesnetwork.whalesbook&hl=en_IN" target="_blank" aria-label="Get it on Google Play">
+          <img 
+            src="/googleplay.webp" 
+            alt="Google Play Store"
+            width="170" 
+            height="50" 
+            class="h-[50px] w-auto object-contain"
+          />
+        </a>
+        <a href="https://apps.apple.com/us/app/whalesbook/id6502243553" target="_blank" aria-label="Download on App Store">
+          <img 
+            src="/appstore.webp" 
+            alt="Apple App Store"
+            width="120" 
+            height="35" 
+            class="h-[35px] w-auto object-contain"
+          />
+        </a>
+      </div>
+    </div>
+  </div>
 
-<div class="flex flex-col">
-  <img src="/banner.webp" class="w-full h-[250px]" />
-
-  <div class="flex flex-row gap-4 mt-4 items-center justify-center">
-    <img src="/googleplay.webp" class="h-[50px]" />
-    <img src="/appstore.webp" class="h-[35px]" />
+  <div class="hidden md:block text-center">
+     <h3 class="text-white font-bold mb-2">Download the App</h3>
+     <p class="text-slate-400 text-xs mb-4">Get instant alerts on your portfolio.</p>
+     <div class="flex flex-col gap-3 items-center">
+        <a href="https://play.google.com/store/apps/details?id=com.whalesnetwork.whalesbook&hl=en_IN" target="_blank" aria-label="Get it on Google Play">
+          <img src="/googleplay.webp" alt="Google Play Store" width="135" height="40" class="h-10 w-auto object-contain" />
+        </a>
+        <a href="https://apps.apple.com/us/app/whalesbook/id6502243553" target="_blank" aria-label="Download on App Store">
+          <img src="/appstore.webp" alt="Apple App Store" width="120" height="40" class="h-10 w-auto object-contain" />
+        </a>
+     </div>
   </div>
 </div>
