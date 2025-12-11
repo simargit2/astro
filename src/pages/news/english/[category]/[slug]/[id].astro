@@ -11,7 +11,7 @@ import Navbar from "../../../../../components/Navbar.astro";
 
 const { id } = Astro.params;
 
-// 1. CACHING HEADERS (Keep this! It makes the server response instant after the first hit)
+// 1. CACHING: Keeps the page fast after the first visit
 Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=3600, stale-while-revalidate=600');
 Astro.response.headers.set('Vary', 'Accept-Encoding');
 
@@ -24,7 +24,6 @@ const imageUrl = articleData?.imageUrl || "";
 const newsType = articleData?.newsType || "News";
 const author = articleData?.author || "Whalesbook Team";
 const dateStr = articleData?.scrappedAt;
-const audioData = articleData?.audioUrl || [];
 
 const formatDate = (isoString) => {
   if (!isoString) return "";
@@ -45,7 +44,7 @@ const parseContent = (text) => {
     .split("\n\n")
     .map((p) => {
       if (p.trim().match(/^<(h3|div)/)) return p;
-      return `<p class="mb-5 leading-relaxed text-slate-300 text-base">${p.replace(/\n/g, "<br>")}</p>`;
+      return `<p class="mb-5 leading-relaxed text-slate-300 text-base font-sans">${p.replace(/\n/g, "<br>")}</p>`;
     })
     .join("");
 };
@@ -64,11 +63,10 @@ const contentHtml = parseContent(detailedCoverage);
     <meta property="og:description" content={shortDescription} />
     {imageUrl && <meta property="og:image" content={imageUrl} />}
     
-    <style>
+    <!-- 2. INLINE CRITICAL CSS (No external file request = Faster Paint) -->
+    <style is:inline>
       :root{color-scheme:dark}
-      body{background-color:#000;color:#e2e8f0}
-      .hero-title{line-height:1.2;letter-spacing:-0.01em}
-      .reserve-img{width:100%;height:auto;aspect-ratio:16/9;background:#111;object-fit:cover;display:block}
+      body{background-color:#000;color:#e2e8f0;font-family:system-ui, -apple-system, sans-serif;}
     </style>
   </head>
 
@@ -81,19 +79,19 @@ const contentHtml = parseContent(detailedCoverage);
         <!-- MAIN COLUMN -->
         <article class="w-full md:w-[70%] lg:w-[75%] min-w-0">
           
-          <!-- 1. LCP ELEMENT: H1 TEXT (Loads Instantly) -->
-          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 hero-title">
+          <!-- LCP TEXT: Renders instantly -->
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 leading-tight tracking-tight">
             {headline}
           </h1>
 
-          <!-- Meta Row (Fixed Contrast: text-slate-400) -->
+          <!-- META -->
           <div class="flex flex-wrap items-center text-xs font-bold tracking-wider text-slate-400 mb-6 uppercase">
             <span class="text-indigo-400">{newsType}</span>
             <span class="mx-2 text-slate-600">|</span>
             <span>{formatDate(dateStr)}</span>
           </div>
 
-          <!-- Author -->
+          <!-- AUTHOR -->
           <div class="flex items-center gap-3 mb-6">
              <div class="w-8 h-8 rounded-full bg-indigo-900/50 flex items-center justify-center border border-indigo-500/30">
                 <span class="text-indigo-300 text-xs font-bold">WB</span>
@@ -104,59 +102,60 @@ const contentHtml = parseContent(detailedCoverage);
              </div>
           </div>
 
-          <!-- Overview Box -->
+          <!-- OVERVIEW (LCP Candidate) -->
           <div class="bg-neutral-900/40 border border-neutral-800 rounded-lg p-5 mb-8">
              <h2 class="text-yellow-400 font-bold text-sm mb-2 uppercase tracking-wide">Overview</h2>
-             <p class="text-slate-300 text-sm md:text-base leading-relaxed">{shortDescription}</p>
+             <p class="text-slate-300 text-sm md:text-base leading-relaxed font-sans">{shortDescription}</p>
           </div>
 
-          <!-- 2. MOBILE STRATEGY: BANNER FIRST -->
-          <!-- We place the banner BEFORE the image on mobile. This pushes the heavy image down. -->
+          <!-- MOBILE BANNER (Above Image) -->
           <div class="md:hidden mb-8">
             <AppBanner />
           </div>
 
-          <!-- 3. MOBILE IMAGE: PUSHED DOWN -->
-          <!-- It is now below the fold. It is no longer the LCP element. -->
+          <!-- MOBILE IMAGE (Below Fold - Low Priority) -->
+          <!-- Inline styles used to avoid generating a CSS file -->
           <div class="md:hidden mb-8">
             <img 
               src={imageUrl || "/placeholder.jpg"} 
               alt={headline} 
               width="800" 
               height="450" 
-              class="reserve-img rounded-lg border border-neutral-800"
+              style="width:100%; height:auto; aspect-ratio:16/9; background:#111; object-fit:cover; display:block;"
+              class="rounded-lg border border-neutral-800"
               loading="lazy" 
               decoding="async"
               fetchpriority="low"
             />
           </div>
 
-          <!-- DESKTOP IMAGE (Hidden on Mobile) -->
+          <!-- DESKTOP IMAGE -->
           <div class="hidden md:block mb-8">
              <img 
               src={imageUrl || "/placeholder.jpg"} 
               alt={headline} 
               width="800" 
               height="450" 
-              class="reserve-img rounded-xl border border-neutral-800"
+              style="width:100%; height:auto; aspect-ratio:16/9; background:#111; object-fit:cover; display:block;"
+              class="rounded-xl border border-neutral-800"
               loading="eager" 
               decoding="async" 
             />
           </div>
 
-          <!-- Content -->
+          <!-- ARTICLE CONTENT -->
           <div class="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-white">
             <div set:html={contentHtml} />
           </div>
 
-          <!-- Mobile Suggestions -->
+          <!-- READ NEXT (Mobile) -->
           <div class="md:hidden mt-10">
              <h3 class="text-yellow-400 font-bold text-lg mb-4">Read Next</h3>
              <NewsList limit={5} layout="col" />
           </div>
         </article>
 
-        <!-- SIDEBAR -->
+        <!-- SIDEBAR (Desktop) -->
         <aside class="hidden md:block w-[30%] lg:w-[25%] shrink-0 space-y-8 sticky top-4 h-fit">
            <AppBanner />
            <div>
@@ -178,12 +177,5 @@ const contentHtml = parseContent(detailedCoverage);
 
       <Footer/>
     </main>
-
-    <!-- Simple Audio Script if needed -->
-    <script type="module">
-      window.addEventListener('load', () => {
-         // Logic for audio player if you add it back
-      });
-    </script>
   </body>
 </html>
