@@ -9,7 +9,6 @@ import NewsList from "../../../../../components/newslist.astro";
 import Footer from "../../../../../components/Footer.astro";
 import Navbar from "../../../../../components/Navbar.astro";
 
-
 const { id } = Astro.params;
 
 const articleData = await fetchNewsDetails(id);
@@ -71,7 +70,6 @@ const contentHtml = parseContent(detailedCoverage);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{headline} – Whalesbook</title>
-    {imageUrl && <link rel="preload" as="image" href={imageUrl} />}
     <meta name="description" content={shortDescription} />
     <link rel="canonical" href={Astro.url.href} />
     <meta property="og:title" content={headline} />
@@ -79,17 +77,27 @@ const contentHtml = parseContent(detailedCoverage);
     {imageUrl && <meta property="og:image" content={imageUrl} />}
     <meta property="og:type" content="article" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- small critical styles inline to avoid render blocking -->
+    <style>
+      :root{color-scheme: dark}
+      .hero-title {font-weight:700;line-height:1.06}
+      /* Reserve image space to avoid CLS */
+      .img-reserve {width:100%;aspect-ratio:16/9;display:block;object-fit:cover}
+      /* reduce repaints for audio controls */
+      .audio-wrap{backface-visibility:hidden}
+    </style>
   </head>
 
   <body class="min-h-screen bg-black text-slate-50 font-sans antialiased pb-24">
-  <Navbar/>
+    <Navbar/>
     <main class="px-4 sm:px-6 md:px-10 py-6 md:py-12">
       <div class="flex flex-col md:flex-row justify-between items-start gap-y-10">
         <div class="w-full md:px-10">
-          <!-- 1. TITLE -->
-          <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] font-bold text-white leading-tight tracking-tight mb-4">
+          <!-- 1. TITLE (text-first to ensure LCP is text) -->
+          <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] hero-title text-white leading-tight tracking-tight mb-4">
             {headline}
           </h1>
+
           <div class="flex flex-wrap items-center text-xs font-semibold tracking-widest text-slate-400 mb-6 md:mb-8 uppercase">
             <span class="text-indigo-400">{newsType.toUpperCase()}</span>
             <span class="mx-3 text-slate-600">|</span>
@@ -110,14 +118,24 @@ const contentHtml = parseContent(detailedCoverage);
             </div>
           </div>
 
-          <!-- 2. IMAGE (Mobile: Right after title) -->
+          <!-- OVERVIEW (render right after title so text is LCP) -->
+          <div class="bg-black/80 border border-neutral-800 rounded-xl p-4 md:p-6 mb-8 md:mb-10 backdrop-blur-sm">
+            <h2 class="text-yellow-400 font-bold text-base md:text-lg mb-2 md:mb-3 border-b border-yellow-400/20 pb-1 inline-block">
+              Overview
+            </h2>
+            <p class="text-slate-300 leading-relaxed text-sm md:text-base lg:text-lg">
+              {shortDescription}
+            </p>
+          </div>
+
+          <!-- MOBILE IMAGE: intentionally moved AFTER overview to make LCP text-based -->
           <div class="md:hidden flex flex-col items-center mb-6">
             <figure class="w-full rounded-xl overflow-hidden shadow-xl border border-neutral-800">
-              <img 
-                src={imageUrl || "https://via.placeholder.com/800x450"} 
+              <img
+                src={imageUrl || "https://via.placeholder.com/800x450"}
                 alt={headline}
-                class="w-full h-auto object-cover bg-neutral-900"
-                loading="eager"
+                class="img-reserve"
+                loading="lazy"
                 decoding="async"
                 width="800"
                 height="450"
@@ -125,9 +143,9 @@ const contentHtml = parseContent(detailedCoverage);
             </figure>
           </div>
 
-          <!-- 3. AUDIO (Mobile: Right after image) -->
+          <!-- 3. AUDIO (Mobile: after mobile image) -->
           {audioData.length > 0 && (
-            <div class="md:hidden w-full mb-6">
+            <div class="md:hidden w-full mb-6 audio-wrap">
               <div class="w-full bg-neutral-900/80 border border-neutral-800 rounded-xl p-3 backdrop-blur-sm">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 border-b border-neutral-800 pb-2">
                   <div class="flex items-center gap-2">
@@ -135,8 +153,8 @@ const contentHtml = parseContent(detailedCoverage);
                     <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Audio Article</span>
                   </div>
 
-                  <select 
-                    id="audio-lang-select" 
+                  <select
+                    id="audio-lang-select"
                     class="bg-black/80 border border-neutral-700 text-slate-300 text-xs rounded px-3 py-1 outline-none focus:border-indigo-500 cursor-pointer w-full sm:w-auto"
                   >
                     {audioData.map((audio) => (
@@ -153,39 +171,22 @@ const contentHtml = parseContent(detailedCoverage);
             </div>
           )}
 
-          <!-- 4. BANNER (Mobile: After audio) -->
+          <!-- 4. BANNER (Mobile) -->
           <div class="md:hidden w-full mb-8">
             <AppBanner />
           </div>
 
-          <!-- NEWS TYPE & DATE (Mobile: After banner) -->
-
-          <!-- OVERVIEW (Mobile: After author) -->
-          <div class="bg-black/80 border border-neutral-800 rounded-xl p-4 md:p-6 mb-8 md:mb-10 backdrop-blur-sm">
-            <h2 class="text-yellow-400 font-bold text-base md:text-lg mb-2 md:mb-3 border-b border-yellow-400/20 pb-1 inline-block">
-              Overview
-            </h2>
-            <p class="text-slate-300 leading-relaxed text-sm md:text-base lg:text-lg">
-              {shortDescription}
-            </p>
-          </div>
-
-          <!-- 5. STOCKS LIST (Mobile: After overview) -->
-          <div class="md:hidden w-full mb-8">
-            <StocksList />
-          </div>
-
-          <!-- DESKTOP IMAGE & AUDIO (unchanged position) -->
+          <!-- DESKTOP IMAGE & AUDIO (desktop shows image in desktop position, lazy to avoid blocking) -->
           <div class="hidden md:flex flex-col items-center mb-10">
             <figure class="w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl border border-neutral-800 mb-6">
-              <img 
-                src={imageUrl || "https://via.placeholder.com/800x450"} 
+              <img
+                src={imageUrl || "https://via.placeholder.com/800x450"}
                 alt={headline}
-                class="w-full h-auto max-h-[350px] object-cover bg-neutral-900"
-                loading="eager"
+                class="img-reserve"
+                loading="lazy"
                 decoding="async"
-                width="800"
-                height="450"
+                width="1200"
+                height="675"
               />
             </figure>
 
@@ -197,8 +198,8 @@ const contentHtml = parseContent(detailedCoverage);
                     <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Audio Article</span>
                   </div>
 
-                  <select 
-                    id="audio-lang-select-desktop" 
+                  <select
+                    id="audio-lang-select-desktop"
                     class="bg-black/80 border border-neutral-700 text-slate-300 text-xs rounded px-3 py-1 outline-none focus:border-indigo-500 cursor-pointer"
                   >
                     {audioData.map((audio) => (
@@ -215,7 +216,7 @@ const contentHtml = parseContent(detailedCoverage);
             )}
           </div>
 
-          <!-- ARTICLE CONTENT -->
+          <!-- ARTICLE CONTENT (server-rendered, but no big images here) -->
           <article class="prose prose-sm sm:prose-base md:prose-lg prose-invert max-w-none text-slate-300 bg-black/80">
             <div set:html={contentHtml} />
           </article>
@@ -228,7 +229,7 @@ const contentHtml = parseContent(detailedCoverage);
 
         </div>
 
-        <!-- DESKTOP ONLY: Sidebar (unchanged) -->
+        <!-- DESKTOP ONLY: Sidebar -->
         <div class="hidden md:block w-[320px] shrink-0 sticky top-10">
           <AppBanner />
           <StocksList />
@@ -237,20 +238,17 @@ const contentHtml = parseContent(detailedCoverage);
         </div>
 
       </div>
-      
-      <!-- DESKTOP NewsList row (unchanged) -->
+
+      <!-- DESKTOP NewsList row -->
       <NewsList layout="row" />
-      
+
       <Footer/>
     </main>
 
-    <!-- AUDIO SWITCH SCRIPT -->
-    <script define:vars={{ audioData }}>
-      // Mobile audio player
+    <!-- AUDIO SWITCH SCRIPT (deferred, non-blocking) -->
+    <script type="module" defer>
       const selectMobile = document.getElementById("audio-lang-select");
       const playerMobile = document.getElementById("main-audio-player");
-      
-      // Desktop audio player
       const selectDesktop = document.getElementById("audio-lang-select-desktop");
       const playerDesktop = document.getElementById("main-audio-player-desktop");
 
@@ -261,7 +259,7 @@ const contentHtml = parseContent(detailedCoverage);
           playerMobile.play().catch((e) => console.log("Auto-play prevented:", e));
         });
       }
-      
+
       if (selectDesktop && playerDesktop) {
         selectDesktop.addEventListener("change", (e) => {
           const newSrc = e.target.value;
@@ -272,56 +270,21 @@ const contentHtml = parseContent(detailedCoverage);
     </script>
 
     <style>
-      /* Base styles */
+      /* Scrollbar + small performance niceties */
       ::-webkit-scrollbar { width: 8px; }
       ::-webkit-scrollbar-track { background: #000; }
       ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
       ::-webkit-scrollbar-thumb:hover { background: #555; }
       audio { filter: invert(1) hue-rotate(180deg) contrast(0.8); }
-      
-      /* Mobile-specific typography */
+
+      /* Ensure images reserve space to avoid CLS */
+      .img-reserve { display:block; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover }
+
+      /* Mobile typography tuning */
       @media (max-width: 640px) {
-        .prose-sm h3 {
-          font-size: 1.125rem !important;
-          line-height: 1.75rem !important;
-          margin-top: 2rem !important;
-          margin-bottom: 0.75rem !important;
-        }
-        
-        .prose-sm p {
-          margin-bottom: 1rem !important;
-          font-size: 0.9375rem !important;
-          line-height: 1.625 !important;
-        }
-        
-        .prose-sm li {
-          margin-bottom: 0.5rem !important;
-          font-size: 0.9375rem !important;
-          line-height: 1.5 !important;
-        }
-      }
-      
-      /* Performance optimizations */
-      img {
-        content-visibility: auto;
-      }
-      
-      /* Touch-friendly tap targets */
-      @media (max-width: 768px) {
-        select, button, [role="button"] {
-          min-height: 44px;
-          min-width: 44px;
-        }
-        
-        audio {
-          min-height: 44px;
-        }
-        
-        /* Ensure proper image aspect ratio on mobile */
-        figure img {
-          aspect-ratio: 16/9;
-          object-fit: cover;
-        }
+        .prose-sm h3 { font-size:1.125rem !important; line-height:1.75rem !important; margin-top:2rem !important; margin-bottom:0.75rem !important; }
+        .prose-sm p { margin-bottom:1rem !important; font-size:0.9375rem !important; line-height:1.625 !important; }
+        .prose-sm li { margin-bottom:0.5rem !important; font-size:0.9375rem !important; line-height:1.5 !important; }
       }
     </style>
   </body>

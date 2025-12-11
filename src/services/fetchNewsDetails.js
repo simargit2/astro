@@ -1,7 +1,7 @@
 export const fetchNewsDetails = async (id) => {
   try {
-    const baseUrl = import.meta.env.API_BASE_URL;
-    const url = `${baseUrl}/published-news-collection/getFreeNewsById`;
+    const baseUrl = process.env.API_BASE_URL; // server env
+    const url = `https://app1.whalesbook1.shop/published-news-collection/getFreeNewsById`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -19,15 +19,15 @@ export const fetchNewsDetails = async (id) => {
     }
 
     const data = await response.json();
-
     return data;
-    
   } catch (error) {
     console.error("fetchNewsDetails error:", error);
     return {
       success: false,
       error: error.message,
-      article: {},
+      translations: [],
+      audioUrl: [],
+      imageUrl: "",
     };
   }
 };
